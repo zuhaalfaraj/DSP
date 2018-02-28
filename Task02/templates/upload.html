@@ -1,0 +1,16 @@
+{% extends "layout.html" %}
+{% block content %}
+<body class="body">
+
+	  <div class="container" align="left">
+			<embed type="image/svg+xml" src={{graph_data|safe}} style='max-width:1000px'/>
+	  </div>
+	  
+	        <form action = "" method = "POST" enctype = "multipart/form-data">
+         <input type = "file" name ="file" />
+         <input type = "submit"/>
+
+
+		      
+</body>
+{% endblock %}

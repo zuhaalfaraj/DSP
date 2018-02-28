@@ -1,0 +1,16 @@
+{% extends "layout.html" %}
+{% block content %}
+<body>
+	<div class="container">
+		<br>
+		<h4>Please Login:</h4>
+		<br>
+		<form action="" class="form-inline" method="post">
+			<input type="int" class="form-control" placeholder = "Username" name="c1" value="{{request.form.c1}}">
+			<input type="int" class="form-control" placeholder = "Password" name="c2" value="{{request.form.c2}}">
+			<input type="int" class="form-control" placeholder = "Password" name="c3" value="{{request.form.c3}}">
+			<input class="btn btn-default" type="submit" value="Login">
+		</form>
+	</div>
+</body>
+{% endblock %}

@@ -1,0 +1,20 @@
+
+{% extends "layout.html" %}
+{% block content %}
+      </form>
+      
+      <aside>
+		<br>
+		<h4>Insert the convolution's values:</h4>
+		<form action="" class="form-inline" method="post">
+			<input type="int" class="form-control" placeholder = "value1" name="c1" value="{{request.form.c1}}">
+			<input type="int" class="form-control" placeholder = "value2" name="c2" value="{{request.form.c2}}">
+			<input type="int" class="form-control" placeholder = "value3" name="c3" value="{{request.form.c3}}">
+			<input class="btn btn-default" type="submit" value="Filtrate">
+		</form>
+		
+			  <div class="container" align="left">
+			<embed type="image/svg+xml" src={{graph_data1|safe}} style='max-width:1000px'/>
+
+		
+{% endblock %}
