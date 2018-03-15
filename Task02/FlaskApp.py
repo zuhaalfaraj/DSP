@@ -6,7 +6,7 @@ from werkzeug import secure_filename
 import os
 from scipy import signal
 
-data=  genfromtxt(r'D:\My stuff\Datasets\ECG.csv', delimiter=',')
+#data=  genfromtxt(r'D:\My stuff\Datasets\ECG.csv', delimiter=',')
 app = Flask(__name__)
 
 ## Generate general functions 
