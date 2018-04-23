@@ -16,6 +16,11 @@ import time
 from tkinter import TclError
 from pyqtgraph.Qt import QtGui, QtCore
 import pyqtgraph as pg
+import time, random
+import math
+from collections import deque
+
+start = time.time()
 
 class TFApp(QtWidgets.QMainWindow, GUI.Ui_MainWindow):
     def __init__(self):
@@ -62,7 +67,7 @@ class TFApp(QtWidgets.QMainWindow, GUI.Ui_MainWindow):
         
         f6 = plt.figure()
         a6 = f6.add_subplot(111)
-        a6.set_ylim(-100, 1000)
+        a6.set_ylim(-10, 10)
         plt.grid(True)
         self.axis6 = a6
         
@@ -79,9 +84,7 @@ class TFApp(QtWidgets.QMainWindow, GUI.Ui_MainWindow):
         plt.grid(True)
         self.axis8 = a8   
         
-
-        
-
+        self.axis8.plot(np.sin([1,2,3,4,3]))
         
 
 
@@ -122,21 +125,19 @@ class TFApp(QtWidgets.QMainWindow, GUI.Ui_MainWindow):
         
         self.mplvls6.addWidget(self.audioF)
         self.audioF.draw()
-        
-        
-        
+             
         self.isPointAddable = False
         self.xPoint, self.yPoint = 0.0, 0.0
+        
         self.canvas_zplane.mpl_connect('button_press_event', self.onMouseClick)
         self.canvas_zplane.mpl_connect('motion_notify_event', self.motion)
         self.canvas_zplane.mpl_connect('button_release_event', self.release)
         self.btn_add.clicked.connect(self.addPoint)
-        self.btn_reset.clicked.connect(self.reset)
-        
+        self.btn_reset.clicked.connect(self.reset)    
         self.Browse.clicked.connect(lambda: self.openFile(self.Browse))
 
         self.zeros, self.zerosXY, self.polesXY, self.poles = [], [], [], []
-        self.files = ["Butterworth.xml", "Chebyshev.xml", "Lowpass.xml", "Highpass.xml"]
+        
 
     def onMouseClick(self, event):
         self.clickFlag = 1
@@ -154,10 +155,10 @@ class TFApp(QtWidgets.QMainWindow, GUI.Ui_MainWindow):
         if self.check_delete.isChecked():
             currentPoint = np.array([complex(ix, iy)])
 
-            if len(self.zeros) > 0 and len(self.poles) > 0:
-                dist1 = np.abs(currentPoint - self.zeros)
-                leastDist1 = np.sort(dist1)[0]
-                dist2 = np.abs(currentPoint - self.poles)
+            if len(self.zeros) > 0 and len(self.poles) > 0: #check the existance of zeros and poles(if we have both)
+                dist1 = np.abs(currentPoint - self.zeros) # calculate the distance between the current point and all zeros
+                leastDist1 = np.sort(dist1)[0] # sort the distanses and get the smallest one 
+                dist2 = np.abs(currentPoint - self.poles) 
                 leastDist2 = np.sort(dist2)[0]
 
                 if leastDist1 <= leastDist2:
@@ -167,18 +168,18 @@ class TFApp(QtWidgets.QMainWindow, GUI.Ui_MainWindow):
                         del self.zerosXY[idx1]
                 else:
                     if np.sort(dist2)[0] <= self.limit:
-                        idx2 = np.where(dist2 <= self.limit)[0][0]
+                        idx2 = np.where(dist2 <= self.limit)[0][0] # check if the point within the limit
                         del self.poles[idx2]
                         del self.polesXY[idx2]
 
 
-            elif len(self.zeros) > 0 >= len(self.poles):
+            elif len(self.zeros) > 0 >= len(self.poles): # if we have only zeros
                 dist1 = np.abs(currentPoint - self.zeros)
                 if np.sort(dist1)[0] <= self.limit:
                     idx1 = np.where(dist1 <= self.limit)[0][0]
                     del self.zeros[idx1]
                     del self.zerosXY[idx1]
-            elif len(self.zeros) <= 0 < len(self.poles):
+            elif len(self.zeros) <= 0 < len(self.poles): # if we have only ones
                 dist2 = np.abs(currentPoint - self.poles)
                 if np.sort(dist2)[0] <= self.limit:
                     idx2 = np.where(dist2 <= self.limit)[0][0]
@@ -189,18 +190,18 @@ class TFApp(QtWidgets.QMainWindow, GUI.Ui_MainWindow):
 
     def release(self, event):
         self.clickFlag = 0
-        count = 0
-        if len(self.zeros) > len(self.poles):
-            count = len(self.zeros)
-        else:
-            count = len(self.poles)
-        self.table_points.setRowCount(count)
-        range1 = np.arange(0, len(self.zeros), 1)
-        for i in range1:
-            self.table_points.setItem(i, 0, QtWidgets.QTableWidgetItem(str(self.zeros[i])))
-        range1 = np.arange(0, len(self.poles), 1)
-        for j in range1:
-            self.table_points.setItem(j, 1, QtWidgets.QTableWidgetItem(str(self.poles[j])))
+#        count = 0
+#        if len(self.zeros) > len(self.poles): #check who have a larger len to determine the rows based on it
+#            count = len(self.zeros)
+#        else:
+#            count = len(self.poles)
+#        self.table_points.setRowCount(count)
+#        range1 = np.arange(0, len(self.zeros), 1)
+#        for i in range1:
+#            self.table_points.setItem(i, 0, QtWidgets.QTableWidgetItem(str(self.zeros[i])))
+#        range1 = np.arange(0, len(self.poles), 1)
+#        for j in range1:
+#            self.table_points.setItem(j, 1, QtWidgets.QTableWidgetItem(str(self.poles[j])))
 
     def motion(self, event):
         self.mouseX = event.xdata
@@ -219,6 +220,8 @@ class TFApp(QtWidgets.QMainWindow, GUI.Ui_MainWindow):
 
                 if leastDist1 <= leastDist2:
                     if np.sort(dist1)[0] <= self.limit:
+                        #np.where returns the location of points that satisfy the condion
+                        # example: (array[2],) , so we use [0][0] to get the index(2) of the desired point to move/delete it
                         idx1 = np.where(dist1 <= self.limit)[0][0]
                         self.zeros[idx1] = complex(round(self.mouseX, 5), round(self.mouseY, 5))
                         self.zerosXY[idx1] = (round(self.mouseX, 5), round(self.mouseY, 5))
@@ -234,6 +237,7 @@ class TFApp(QtWidgets.QMainWindow, GUI.Ui_MainWindow):
                     idx1 = np.where(dist1 <= self.limit)[0][0]
                     self.zeros[idx1] = complex(round(self.mouseX, 5), round(self.mouseY, 5))
                     self.zerosXY[idx1] = (round(self.mouseX, 5), round(self.mouseY, 5))
+                    
             elif len(self.zeros) <= 0 < len(self.poles):
                 dist2 = np.abs(currentPoint - self.poles)
                 if np.sort(dist2)[0] <= self.limit:
@@ -274,10 +278,11 @@ class TFApp(QtWidgets.QMainWindow, GUI.Ui_MainWindow):
         self.canvas_zplane.mpl_connect('button_press_event', self.onMouseClick)
         self.canvas_zplane.mpl_connect('motion_notify_event', self.motion)
         self.canvas_zplane.mpl_connect('button_release_event', self.release)
+        self.Browse.clicked.connect(lambda: self.openFile(self.Browse))
 
 
     def column(self, matrix, i):
-        return [row[i] for row in matrix]
+        return [row[i] for row in matrix] #This function returns the value of x when i=0, and the value of y when i=1
 
     def updateAxisCircle(self):
         self.axis.cla()
@@ -294,7 +299,6 @@ class TFApp(QtWidgets.QMainWindow, GUI.Ui_MainWindow):
         self.canvas_zplane.draw()
         self.drawTransferFunction(k)
 
-
     def drawTransferFunction(self, k=1.0):
         self.axis2.cla()
         num, dom = sc.zpk2tf(self.zeros, self.poles, k)
@@ -308,18 +312,17 @@ class TFApp(QtWidgets.QMainWindow, GUI.Ui_MainWindow):
         self.axis6.plot(self.filtered)
         self.signalF2.draw()
         
-        backToTime= ifft(self.filtered)
+        backToTime= ifft(self.filtered , self.filtered.shape[0])
         self.axis4.cla()
         self.axis4.plot(backToTime)
         self.signalT2.draw()
-        
-        
+                
     def openFile(self,b):
         if b.text() == 'Browse': 
           filename = QFileDialog.getOpenFileName(self, 'Open File', os.getenv('HOME'))
           data =genfromtxt(filename[0] , delimiter=',')
           N = 600
-    # sample spacing
+          #sample spacing
           T = 1.0 / 800.0
           self.yf = rfft(data[1,:])
           xf = np.linspace(0.0, 1.0/(2.0*T), N//2)
@@ -329,19 +332,8 @@ class TFApp(QtWidgets.QMainWindow, GUI.Ui_MainWindow):
  
           self.axis5.plot(xf, 2.0/N * np.abs(self.yf[:N//2]))
           self.signalF1.draw()
-          
 
-          
-    def signalxfilter(self):
-        s= np.sin(np.arange(0,1,0.1))
-        self.filtered = signal.convolve(self.ff, s)
-        self.axis6.plot(self.filtered)
-        self.signalF2.draw()
-        
-        
-
-
-
+   
 
 def main():
     App = QtWidgets.QApplication(sys.argv)
